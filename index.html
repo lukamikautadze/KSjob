@@ -13,7 +13,14 @@
         .feed { max-width: 750px; margin: 30px auto; padding: 0 20px; }
         .vacancy-card { background: var(--card); padding: 25px; margin-bottom: 25px; border-radius: 12px; border: 1px solid rgba(255,215,0,0.1); position: relative; }
         
-        /* Card Header & Content Layout */
+        /* THE GREY-OUT LOGIC */
+        .expired .card-header, 
+        .expired .description, 
+        .expired .tag { 
+            opacity: 0.5; 
+            filter: grayscale(1); 
+        }
+
         .card-header { display: flex; align-items: center; gap: 20px; margin-bottom: 15px; }
         .logo-box { width: 100px; height: 100px; min-width: 100px; background: #001a35; border-radius: 8px; overflow: hidden; border: 2px solid var(--yellow); display: flex; align-items: center; justify-content: center; }
         .logo-box img { width: 100%; height: 100%; object-fit: cover; }
@@ -21,10 +28,12 @@
         .info-wrapper { flex-grow: 1; display: flex; justify-content: space-between; align-items: flex-start; }
         .company-name { font-size: 0.9rem; color: var(--yellow); text-transform: uppercase; font-weight: bold; }
         
-        /* Badges - Green for Active, Red for Expired */
+        /* BADGES */
         .status-badge { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
         .status-badge.active { background: rgba(46, 204, 113, 0.15); border: 1px solid var(--green); color: var(--green); }
-        .status-badge.expired-badge { background: rgba(255, 77, 77, 0.15); border: 1px solid var(--red); color: var(--red); }
+        
+        /* Red Expired Badge - High Visibility */
+        .status-badge.expired-badge { background: rgba(255, 77, 77, 0.2); border: 2px solid var(--red); color: var(--red); }
         
         .dot { width: 8px; height: 8px; border-radius: 50%; }
         .dot.green { background-color: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 1.5s infinite; }
@@ -36,15 +45,19 @@
         .tag { background: rgba(255,215,0,0.15); color: var(--yellow); padding: 4px 10px; font-size: 0.75rem; border: 1px solid var(--yellow); border-radius: 4px; display: inline-block; }
         .description { color: #d1d1d1; margin: 20px 0; font-size: 1.1rem; line-height: 1.5; }
         
-        .action-row { display: flex; gap: 10px; align-items: stretch; }
+        .action-row { display: flex; gap: 10px; align-items: stretch; margin-top: 20px; }
         
-        /* Buttons */
+        /* BUTTONS */
         .call-btn { flex-grow: 1; text-align: center; padding: 18px; text-decoration: none; font-weight: 900; border-radius: 8px; text-transform: uppercase; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; border: none; }
         .call-btn.active-btn { background: var(--yellow); color: var(--bg); }
-        .call-btn.expired-btn { background: var(--red); color: white; cursor: not-allowed; }
+        
+        /* Red Action Row for Expired */
+        .call-btn.expired-btn { background: var(--red); color: white; cursor: default; }
         
         .share-btn-wrap { background: rgba(255,255,255,0.1); border: 1px solid var(--yellow); padding: 0 15px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .logo-stack { position: relative; width: 45px; height: 24px; pointer-events: none; }
+        
+        /* Icons always colored */
+        .logo-stack { position: relative; width: 45px; height: 24px; pointer-events: none; filter: none !important; opacity: 1 !important; }
         .mini-logo { width: 22px; height: 22px; position: absolute; background: transparent; }
         .l1 { left: 0; z-index: 3; } .l2 { left: 12px; z-index: 2; } .l3 { left: 24px; z-index: 1; }
 
@@ -85,7 +98,7 @@
                         
                         const isActive = status && status.toLowerCase() === 'active';
                         const card = document.createElement('div');
-                        card.className = 'vacancy-card';
+                        card.className = `vacancy-card ${!isActive ? 'expired' : ''}`;
                         
                         const badgeHTML = isActive 
                             ? '<div class="status-badge active"><div class="dot green"></div>Active</div>'
