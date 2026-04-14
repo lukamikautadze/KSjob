@@ -11,9 +11,9 @@
         h1 { font-size: 2.5rem; color: var(--yellow); margin: 0; text-transform: uppercase; letter-spacing: 2px; }
         
         .feed { max-width: 750px; margin: 30px auto; padding: 0 20px; }
-        .vacancy-card { background: var(--card); padding: 25px; margin-bottom: 25px; border-radius: 12px; border: 1px solid rgba(255,215,0,0.1); position: relative; transition: opacity 0.3s ease; overflow: hidden; }
+        .vacancy-card { background: var(--card); padding: 25px; margin-bottom: 25px; border-radius: 12px; border: 1px solid rgba(255,215,0,0.1); position: relative; }
         
-        /* Expired State */
+        /* Expired State - No fancy watermarks, just clean gray-out */
         .expired { opacity: 0.5; filter: grayscale(1); }
         .expired .call-btn { pointer-events: none; background: #444; color: #888; border: none; }
 
@@ -33,3 +33,97 @@
         .vacancy-title { font-size: 2.2rem; font-weight: 900; margin: 5px 0; line-height: 1.1; }
         .tag { background: rgba(255,215,0,0.15); color: var(--yellow); padding: 4px 10px; font-size: 0.75rem; border: 1px solid var(--yellow); border-radius: 4px; display: inline-block; }
         .description { color: #d1d1d1; margin: 20px 0; font-size: 1.1rem; line-height: 1.5; }
+        
+        /* Fixed Action Row Alignment */
+        .action-row { display: flex; gap: 10px; margin-top: 20px; align-items: stretch; }
+        .call-btn { flex: 1; background: var(--yellow); color: var(--bg); text-align: center; padding: 15px 5px; text-decoration: none; font-weight: 900; border-radius: 8px; text-transform: uppercase; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; }
+        
+        /* Share button with original icons */
+        .stack-share-btn { width: 75px; min-width: 75px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,215,0,0.3); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .logo-stack { position: relative; width: 48px; height: 24px; pointer-events: none; }
+        .mini-logo { width: 22px; height: 22px; border-radius: 4px; position: absolute; border: 1px solid var(--card); background: white; }
+        .l1 { left: 0; z-index: 3; }
+        .l2 { left: 13px; z-index: 2; }
+        .l3 { left: 26px; z-index: 1; }
+
+        #loader { text-align: center; padding: 100px; font-size: 1.5rem; color: var(--yellow); }
+    </style>
+</head>
+<body>
+    <header><h1>CITY JOBS</h1></header>
+    <div id="loader">იტვირთება...</div>
+    <div class="feed" id="vacancy-feed"></div>
+
+    <script>
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8h_VRg9Qzv6U7qB3E4WDM0RXakzamSRIBCOqZT3qtFH-UE0p8QTUrkuGioYOar_KNlIx3dzOXebk8/pub?gid=0&single=true&output=csv'; 
+
+        function handleShare(title, company) {
+            const shareText = `${company}-ში ეძებენ: ${title}. ნახე აქ: ${window.location.href}`;
+            if (navigator.share) {
+                navigator.share({ title: 'Kutaisi Jobs', text: shareText, url: window.location.href }).catch(() => {});
+            } else {
+                navigator.clipboard.writeText(shareText);
+                alert('ბმული კოპირებულია!');
+            }
+        }
+
+        async function loadJobs() {
+            try {
+                const res = await fetch(csvUrl);
+                const data = await res.text();
+                const rows = data.split(/\r?\n/).filter(r => r.includes(',')).slice(1);
+                const feed = document.getElementById('vacancy-feed');
+                document.getElementById('loader').style.display = 'none';
+
+                rows.forEach(row => {
+                    const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    if (cols.length >= 6) {
+                        let [logo, company, title, desc, tag, phone, status] = cols.map(c => c ? c.replace(/^"|"$/g, '').trim() : "");
+                        
+                        if (logo.includes("github.com/")) logo = logo.replace("/blob/", "/raw/");
+                        
+                        const isActive = (status && status.toLowerCase() === 'active');
+                        const card = document.createElement('div');
+                        card.className = `vacancy-card ${!isActive ? 'expired' : ''}`;
+                        
+                        // Sanitize strings for JS
+                        const safeTitle = title.replace(/'/g, "");
+                        const safeCompany = company.replace(/'/g, "");
+
+                        card.innerHTML = `
+                            <div class="card-header">
+                                <div class="logo-box">
+                                    <img src="${logo}" onerror="this.src='https://via.placeholder.com/100/001a35/FFD700?text=LOGO'">
+                                </div>
+                                <div style="flex-grow: 1;">
+                                    <div class="info-wrapper">
+                                        <span class="company-name">${company}</span>
+                                        ${isActive ? '<div class="status-badge"><div class="dot"></div><span class="status-text">Active</span></div>' : ''}
+                                    </div>
+                                    <h2 class="vacancy-title">${title}</h2>
+                                    <span class="tag">${tag}</span>
+                                </div>
+                            </div>
+                            <p class="description">${desc}</p>
+                            <div class="action-row">
+                                <a href="tel:${phone}" class="call-btn">${isActive ? 'დარეკვა: ' + phone : 'დასრულებულია'}</a>
+                                <div class="stack-share-btn" onclick="handleShare('${safeTitle}', '${safeCompany}')">
+                                    <div class="logo-stack">
+                                        <img class="mini-logo l1" src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg">
+                                        <img class="mini-logo l2" src="https://upload.wikimedia.org/wikipedia/commons/b/be/Facebook_Messenger_logo_2020.svg">
+                                        <img class="mini-logo l3" src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png">
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        feed.appendChild(card);
+                    }
+                });
+            } catch (e) {
+                document.getElementById('loader').innerText = "შეცდომა!";
+            }
+        }
+        loadJobs();
+    </script>
+</body>
+</html>
