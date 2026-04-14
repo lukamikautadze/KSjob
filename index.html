@@ -1,6 +1,4 @@
-<script>
-        // Ensure you have gone to File > Share > Publish to Web > CSV
-        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8h_VRg9Qzv6U7qB3E4WDM0RXakzamSRIBCOqZT3qtFH-UE0p8QTUrkuGioYOar_KNlIx3dzOXebk8/pub?gid=0&single=true&output=csv'; 
+const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8h_VRg9Qzv6U7qB3E4WDM0RXakzamSRIBCOqZT3qtFH-UE0p8QTUrkuGioYOar_KNlIx3dzOXebk8/pub?gid=0&single=true&output=csv'; 
 
         async function loadJobs() {
             try {
@@ -8,7 +6,7 @@
                 if (!res.ok) throw new Error('Network error');
                 const data = await res.text();
                 
-                // Cleans up any weird spacing from Google Sheets
+                // Cleans up rows and skips header
                 const rows = data.split(/\r?\n/).filter(row => row.trim() !== "").slice(1);
                 const feed = document.getElementById('vacancy-feed');
                 document.getElementById('loader').style.display = 'none';
@@ -18,7 +16,7 @@
                     if (cols.length >= 4) {
                         let [logo, company, title, desc, tag, phone] = cols.map(c => c.replace(/^"|"$/g, '').trim());
 
-                        // AUTO-FIX: Converts GitHub 'blob' links to 'raw' so images show up
+                        // THE FIX: Automatically converts GitHub links to RAW format
                         if (logo.includes("github.com") && logo.includes("/blob/")) {
                             logo = logo.replace("/blob/", "/raw/");
                         }
@@ -28,11 +26,11 @@
                         card.innerHTML = `
                             <div class="card-header">
                                 <div class="logo-box">
-                                    <img src="${logo}" onerror="this.src='https://via.placeholder.com/500?text=LOGO'">
+                                    <img src="${logo}" alt="Logo" onerror="this.parentElement.style.background='#003d7a'; this.style.display='none';">
                                 </div>
                                 <div>
                                     <span class="company-name">${company || ''}</span>
-                                    <h2 class="vacancy-title" style="font-weight: 900;">${title || 'No Title'}</h2>
+                                    <h2 class="vacancy-title" style="font-weight: 900; font-size: 2.2rem; margin: 0;">${title || 'No Title'}</h2>
                                     <span class="tag">${tag || 'General'}</span>
                                 </div>
                             </div>
@@ -44,8 +42,7 @@
                 });
             } catch (e) {
                 console.error(e);
-                document.getElementById('loader').innerHTML = "Error loading data. Make sure the Sheet is 'Published to Web' as a CSV.";
+                document.getElementById('loader').innerHTML = "Error loading data. Check CSV link.";
             }
         }
         loadJobs();
-    </script>
