@@ -13,11 +13,13 @@
         .feed { max-width: 750px; margin: 30px auto; padding: 0 20px; }
         .vacancy-card { background: var(--card); padding: 25px; margin-bottom: 25px; border-radius: 12px; border: 1px solid rgba(255,215,0,0.1); position: relative; }
         
-        /* THE GREY-OUT LOGIC */
-        .expired .card-header, 
-        .expired .description, 
+        /* Grey-out specific elements for expired cards */
+        .expired .logo-box,
+        .expired .company-name,
+        .expired .vacancy-title,
+        .expired .description,
         .expired .tag { 
-            opacity: 0.5; 
+            opacity: 0.4; 
             filter: grayscale(1); 
         }
 
@@ -28,16 +30,16 @@
         .info-wrapper { flex-grow: 1; display: flex; justify-content: space-between; align-items: flex-start; }
         .company-name { font-size: 0.9rem; color: var(--yellow); text-transform: uppercase; font-weight: bold; }
         
-        /* BADGES */
+        /* Status Badges */
         .status-badge { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+        
+        /* Active Badge (Green) */
         .status-badge.active { background: rgba(46, 204, 113, 0.15); border: 1px solid var(--green); color: var(--green); }
-        
-        /* Red Expired Badge - High Visibility */
-        .status-badge.expired-badge { background: rgba(255, 77, 77, 0.2); border: 2px solid var(--red); color: var(--red); }
-        
-        .dot { width: 8px; height: 8px; border-radius: 50%; }
         .dot.green { background-color: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 1.5s infinite; }
-        .dot.red { background-color: var(--red); box-shadow: 0 0 8px var(--red); }
+
+        /* Expired Badge (Red - NO GREYOUT) */
+        .status-badge.expired-badge { background: var(--red); color: white; border: 1px solid var(--red); z-index: 5; opacity: 1 !important; filter: none !important; }
+        .dot.red { background-color: white; }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
@@ -47,16 +49,16 @@
         
         .action-row { display: flex; gap: 10px; align-items: stretch; margin-top: 20px; }
         
-        /* BUTTONS */
+        /* Call Buttons */
         .call-btn { flex-grow: 1; text-align: center; padding: 18px; text-decoration: none; font-weight: 900; border-radius: 8px; text-transform: uppercase; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; border: none; }
         .call-btn.active-btn { background: var(--yellow); color: var(--bg); }
         
-        /* Red Action Row for Expired */
-        .call-btn.expired-btn { background: var(--red); color: white; cursor: default; }
+        /* Red Action Row (NO GREYOUT) */
+        .call-btn.expired-btn { background: var(--red); color: white; cursor: default; opacity: 1 !important; filter: none !important; }
         
         .share-btn-wrap { background: rgba(255,255,255,0.1); border: 1px solid var(--yellow); padding: 0 15px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         
-        /* Icons always colored */
+        /* Share Icons (NO GREYOUT) */
         .logo-stack { position: relative; width: 45px; height: 24px; pointer-events: none; filter: none !important; opacity: 1 !important; }
         .mini-logo { width: 22px; height: 22px; position: absolute; background: transparent; }
         .l1 { left: 0; z-index: 3; } .l2 { left: 12px; z-index: 2; } .l3 { left: 24px; z-index: 1; }
@@ -106,7 +108,6 @@
 
                         const btnClass = isActive ? 'active-btn' : 'expired-btn';
                         const btnText = isActive ? 'დარეკვა: ' + phone : 'ვაკანსია შევსებულია';
-                        const btnHref = isActive ? `href="tel:${phone}"` : 'href="javascript:void(0)"';
 
                         card.innerHTML = `
                             <div class="card-header">
@@ -124,7 +125,7 @@
                             </div>
                             <p class="description">${desc}</p>
                             <div class="action-row">
-                                <a ${btnHref} class="call-btn ${btnClass}">${btnText}</a>
+                                <a ${isActive ? `href="tel:${phone}"` : 'href="javascript:void(0)"'} class="call-btn ${btnClass}">${btnText}</a>
                                 <div class="share-btn-wrap" onclick="handleShare('${title.replace(/'/g, "")}', '${company.replace(/'/g, "")}')">
                                     <div class="logo-stack">
                                         <img class="mini-logo l1" src="https://cdn-icons-png.flaticon.com/512/733/733585.png">
