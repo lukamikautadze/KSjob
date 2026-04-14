@@ -38,7 +38,13 @@
         .action-row { display: flex; gap: 10px; margin-top: 15px; }
         .call-btn { flex-grow: 1; background: var(--yellow); color: var(--bg); text-align: center; padding: 18px; text-decoration: none; font-weight: 900; border-radius: 8px; text-transform: uppercase; font-size: 1.1rem; }
         
-        .stack-share-btn { width: 70px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,215,0,0.2); border-radius: 8px; cursor: pointer; position: relative; display: flex; align-items: center; justify-content: center; }
+        <div class="stack-share-btn" onclick="handleShare('${title.replace(/'/g, "\\'")}', '${company.replace(/'/g, "\\'")}')">
+    <div class="logo-stack">
+        <img class="mini-logo l1" src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WA">
+        <img class="mini-logo l2" src="https://upload.wikimedia.org/wikipedia/commons/b/be/Facebook_Messenger_logo_2020.svg" alt="MSN">
+        <img class="mini-logo l3" src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" alt="IG">
+    </div>
+</div>
         .logo-stack { position: relative; width: 45px; height: 25px; }
         .mini-logo { width: 20px; height: 20px; border-radius: 4px; position: absolute; border: 1px solid var(--card); }
         .l1 { left: 0; z-index: 3; background: #25D366; }
