@@ -6,19 +6,69 @@
     <title>Kutaisi Jobs</title>
     <style>
         :root { --bg: #001f3f; --card: #002d5b; --yellow: #FFD700; --text: #ffffff; --green: #2ecc71; --red: #ff4d4d; }
-        body { background-color: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding: 0; }
-        header { padding: 40px 20px; text-align: center; border-bottom: 5px solid var(--yellow); }
-        h1 { font-size: 2.5rem; color: var(--yellow); margin: 0; text-transform: uppercase; }
         
-        .feed { max-width: 750px; margin: 30px auto; padding: 0 20px; }
+        body { background-color: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding: 0; }
+
+        /* --- NEW HERO HEADER --- */
+        .hero {
+            height: 100vh;
+            width: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            /* Background Placeholder: Replace with a Kutaisi Cityscape or Office image */
+            background: linear-gradient(rgba(0, 31, 63, 0.7), rgba(0, 31, 63, 0.7)), 
+                        url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; /* Parallax effect */
+        }
+
+        .hero h1 { 
+            font-size: clamp(3rem, 10vw, 5rem); 
+            color: var(--yellow); 
+            margin: 0; 
+            text-transform: uppercase; 
+            font-weight: 900;
+            letter-spacing: 5px;
+            text-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin-top: 20px;
+            padding: 0 20px;
+            line-height: 1.6;
+            color: #e0e0e0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--yellow);
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+
+        /* --- VACANCY FEED --- */
+        .feed { max-width: 750px; margin: 50px auto; padding: 0 20px; }
         .vacancy-card { background: var(--card); padding: 25px; margin-bottom: 25px; border-radius: 12px; border: 1px solid rgba(255,215,0,0.1); position: relative; }
         
-        /* Grey-out specific elements for expired cards */
-        .expired .logo-box,
-        .expired .company-name,
-        .expired .vacancy-title,
-        .expired .description,
-        .expired .tag { 
+        /* The Red/Grey Logic */
+        .expired .logo-box, .expired .company-name, .expired .vacancy-title, .expired .description, .expired .tag { 
             opacity: 0.4; 
             filter: grayscale(1); 
         }
@@ -30,15 +80,12 @@
         .info-wrapper { flex-grow: 1; display: flex; justify-content: space-between; align-items: flex-start; }
         .company-name { font-size: 0.9rem; color: var(--yellow); text-transform: uppercase; font-weight: bold; }
         
-        /* Badges */
         .status-badge { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
-        
-        /* Active Badge & Dot (Green) */
         .status-badge.active { background: rgba(46, 204, 113, 0.15); border: 1px solid var(--green); color: var(--green); }
-        .dot.green { background-color: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 1.5s infinite; }
-
-        /* Expired Badge & Dot (Red - VIVID) */
         .status-badge.expired-badge { background: rgba(255, 77, 77, 0.2); border: 2px solid var(--red); color: var(--red); opacity: 1 !important; filter: none !important; }
+        
+        .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .dot.green { background-color: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 1.5s infinite; }
         .dot.red { background-color: var(--red); box-shadow: 0 0 8px var(--red); animation: pulse 1.5s infinite; }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
@@ -48,8 +95,6 @@
         .description { color: #d1d1d1; margin: 20px 0; font-size: 1.1rem; line-height: 1.5; }
         
         .action-row { display: flex; gap: 10px; align-items: stretch; margin-top: 20px; }
-        
-        /* Call Buttons */
         .call-btn { flex-grow: 1; text-align: center; padding: 18px; text-decoration: none; font-weight: 900; border-radius: 8px; text-transform: uppercase; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; border: none; }
         .call-btn.active-btn { background: var(--yellow); color: var(--bg); }
         .call-btn.expired-btn { background: var(--red); color: white; cursor: default; opacity: 1 !important; filter: none !important; }
@@ -59,11 +104,17 @@
         .mini-logo { width: 22px; height: 22px; position: absolute; background: transparent; }
         .l1 { left: 0; z-index: 3; } .l2 { left: 12px; z-index: 2; } .l3 { left: 24px; z-index: 1; }
 
-        #loader { text-align: center; padding: 100px; font-size: 1.5rem; color: var(--yellow); }
+        #loader { text-align: center; padding: 50px; font-size: 1.5rem; color: var(--yellow); }
     </style>
 </head>
 <body>
-    <header><h1>CITY JOBS</h1></header>
+
+    <section class="hero">
+        <h1>CITY JOBS</h1>
+        <p>ყველაზე აქტუალური ვაკანსიები ქუთაისში. იპოვე შენი მომავალი სამსახური დღესვე.</p>
+        <div class="scroll-indicator">ჩამოშალეთ ვაკანსიებისთვის ↓</div>
+    </section>
+
     <div id="loader">იტვირთება...</div>
     <div class="feed" id="vacancy-feed"></div>
 
@@ -84,14 +135,18 @@
             try {
                 const res = await fetch(csvUrl);
                 const data = await res.text();
+                // CSV Plumbing: splitting rows
                 const rows = data.split(/\r?\n/).filter(r => r.includes(',')).slice(1);
                 const feed = document.getElementById('vacancy-feed');
                 document.getElementById('loader').style.display = 'none';
 
                 rows.forEach(row => {
+                    // CSV Plumbing: The Regex Rule
                     const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     if (cols.length >= 6) {
                         let [logo, company, title, desc, tag, phone, status] = cols.map(c => c ? c.replace(/^"|"$/g, '').trim() : "");
+                        
+                        // Technical Plumbing: GitHub URL fix
                         if (logo.includes("github.com/")) logo = logo.replace("/blob/", "/raw/");
                         
                         const isActive = status && status.toLowerCase() === 'active';
@@ -135,7 +190,7 @@
                     }
                 });
             } catch (e) {
-                document.getElementById('loader').innerText = "შეცდომა.";
+                document.getElementById('loader').innerText = "შეცდომა მონაცემების ჩატვირთვისას.";
             }
         }
         loadJobs();
