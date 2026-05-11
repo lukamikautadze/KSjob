@@ -32,7 +32,6 @@
             margin: 0; 
             font-weight: 900;
             text-shadow: 0 5px 15px rgba(0,0,0,0.8);
-            /* THE FIX: Increased line-height for Georgian characters */
             line-height: 1.2; 
             padding: 0 15px;
         }
@@ -40,7 +39,6 @@
         .hero p {
             font-size: 1.1rem;
             max-width: 600px;
-            /* THE FIX: Increased margin to stop mashing with title */
             margin-top: 30px; 
             padding: 0 20px;
             line-height: 1.6;
@@ -53,15 +51,15 @@
         @media (max-width: 600px) {
             .hero h1 {
                 font-size: 2.2rem;
-                line-height: 1.3; /* Extra breathing room for mobile stems */
+                line-height: 1.3;
                 letter-spacing: 1px;
             }
             .hero p {
-                font-size: 1rem;
+                font-size: 1.1rem;
                 margin-top: 20px;
             }
             .hero {
-                background-attachment: scroll; /* Smoother on mobile browsers */
+                background-attachment: scroll;
             }
         }
 
@@ -85,7 +83,7 @@
         .feed { max-width: 750px; margin: 50px auto; padding: 0 20px; }
         .vacancy-card { background: var(--card); padding: 25px; margin-bottom: 25px; border-radius: 12px; border: 1px solid rgba(255,215,0,0.1); position: relative; }
         
-        .expired .logo-box, .expired .company-name, .expired .vacancy-title, .expired .description, .expired .tag { 
+        .expired .logo-box, .expired .company-name, .expired .vacancy-title, .expired .description { 
             opacity: 0.4; 
             filter: grayscale(1); 
         }
@@ -94,7 +92,7 @@
         .logo-box { width: 100px; height: 100px; min-width: 100px; background: #001a35; border-radius: 8px; overflow: hidden; border: 2px solid var(--yellow); display: flex; align-items: center; justify-content: center; }
         .logo-box img { width: 100%; height: 100%; object-fit: cover; }
         
-        .info-wrapper { flex-grow: 1; display: flex; justify-content: space-between; align-items: flex-start; }
+        .info-wrapper { display: flex; justify-content: space-between; align-items: flex-start; }
         .company-name { font-size: 0.9rem; color: var(--yellow); text-transform: uppercase; font-weight: bold; }
         
         .status-badge { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
@@ -108,7 +106,6 @@
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
         .vacancy-title { font-size: 2.2rem; font-weight: 900; margin: 5px 0; line-height: 1.1; }
-        .tag { background: rgba(255,215,0,0.15); color: var(--yellow); padding: 4px 10px; font-size: 0.75rem; border: 1px solid var(--yellow); border-radius: 4px; display: inline-block; }
         .description { color: #d1d1d1; margin: 20px 0; font-size: 1.1rem; line-height: 1.5; }
         
         .action-row { display: flex; gap: 10px; align-items: stretch; margin-top: 20px; }
@@ -184,8 +181,7 @@
                                         ${badgeHTML}
                                     </div>
                                     <h2 class="vacancy-title">${title}</h2>
-                                    <span class="tag">${tag}</span>
-                                </div>
+                                    </div>
                             </div>
                             <p class="description">${desc}</p>
                             <div class="action-row">
