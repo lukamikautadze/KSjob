@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;700;900&display=swap" rel="stylesheet">
 
     <style>
-        /* --- DESIGN VARIABLES --- */
         :root { 
             --bg: #001f3f; 
             --card: #002d5b; 
@@ -21,14 +20,12 @@
             --main-font: 'Noto Sans Georgian', sans-serif;
         }
         
-        /* Apply the clean font globally to clear any platform defaults */
         body, html, h1, h2, p, span, div, a { 
             font-family: var(--main-font) !important; 
         }
 
         body { background-color: var(--bg); color: var(--text); margin: 0; padding: 0; }
 
-        /* --- HERO AREA STYLES --- */
         .hero {
             height: 50vh;
             width: 100%;
@@ -45,7 +42,6 @@
             background-attachment: fixed;
         }
 
-        /* LOCKED LOGO DIMENSIONS */
         .hero-logo {
             position: absolute;
             top: 25px;
@@ -57,7 +53,6 @@
             filter: drop-shadow(0 2px 10px rgba(0,0,0,0.3));
         }
 
-        /* FORCE CORRECTION ON YELLOW HEADERS */
         .hero h1 { 
             font-family: var(--main-font) !important;
             font-size: clamp(1.8rem, 5vw, 3.2rem); 
@@ -106,7 +101,6 @@
             60% {transform: translateY(-5px) translateX(-50%);}
         }
 
-        /* --- VACANCY CARDS FEED --- */
         .feed { max-width: 750px; margin: 50px auto; padding: 0 20px; }
         .vacancy-card { background: var(--card); padding: 25px; margin-bottom: 25px; border-radius: 12px; border: 1px solid rgba(255,215,0,0.1); position: relative; }
         
@@ -133,7 +127,7 @@
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
         .vacancy-title { font-size: 1.8rem; font-weight: 700; margin: 5px 0; line-height: 1.2; }
-        .description { color: #d1d1d1; margin: 20px 0; font-size: 1rem; line-height: 1.5; }
+        .description { color: #d1d1d1; margin: 20px 0; font-size: 1rem; line-height: 1.5; white-space: pre-line; }
         
         .action-row { display: flex; gap: 10px; align-items: stretch; margin-top: 20px; }
         .call-btn { flex-grow: 1; text-align: center; padding: 18px; text-decoration: none; font-weight: 700; border-radius: 8px; text-transform: uppercase; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; border: none; }
@@ -152,54 +146,69 @@
 
     <section class="hero">
         <img src="https://github.com/lukamikautadze/KSjob/raw/main/Asset%203%404x.png" alt="Council Logo" class="hero-logo">
-
         <h1>საზაფხულო ვაკანსიები <br> ქუთაისში</h1>
         <p>ყველაზე აქტუალური ვაკანსიები ქუთაისში. იპოვე შენი მომავალი სამსახური დღესვე.</p>
         <div class="scroll-indicator">ჩამოშალეთ ვაკანსიებისთვის ↓</div>
     </section>
 
-    <div id="loader">იტვირთება...</div>
+    <div id="loader">იტვირთება ვაკანსიები...</div>
     <div class="feed" id="vacancy-feed"></div>
 
     <script>
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8h_VRg9Qzv6U7qB3E4WDM0RXakzamSRIBCOqZT3qtFH-UE0p8QTUrkuGioYOar_KNlIx3dzOXebk8/pub?gid=0&single=true&output=csv'; 
 
-        // გასწორებული გაზიარების ლოგიკა, რომელიც შლის დუბლირებულ ლინკებს
         function handleShare(title, company) {
             const cleanTitle = title.replace(/['"]+/g, '').trim();
             const cleanCompany = company.replace(/['"]+/g, '').trim();
-            
-            // სუფთა დომენის აღება ყოველგვარი fbclid კუდების გარეშე
             const shareUrl = window.location.origin + window.location.pathname;
             
             if (navigator.share) {
-                // მობილურებისთვის: ტექსტში ლინკს აღარ ვწერთ, ნავიგატორი თვითონ ჩასვამს ბოლოში ლამაზად ერთხელ
                 navigator.share({ 
                     title: 'ვაკანსია', 
                     text: `${cleanCompany}-ში ეძებენ: ${cleanTitle}. ნახე აქ:`, 
                     url: shareUrl 
                 }).catch(()=>{});
             } else {
-                // კომპიუტერებისთვის/კოპირებისთვის: აქ ვტოვებთ ერთ ლინკს ბოლოში
                 const fallbackText = `${cleanCompany}-ში ეძებენ: ${cleanTitle}. ნახე აქ: ${shareUrl}`;
                 navigator.clipboard.writeText(fallbackText);
                 alert('ბმული კოპირებულია');
             }
         }
 
+        // CSV-ს უსაფრთხო პარსინგის ფუნქცია (მძიმეებზე და ბრჭყალებზე არ ფეთქდება)
+        function parseCSV(text) {
+            let p = '', r = [];
+            let q = false;
+            let row = [''];
+            for (let i=0; i<text.length; i++) {
+                let c = text[i];
+                let next = text[i+1];
+                if (c === '"') { if (q && next === '"') { row[row.length - 1] += '"'; i++; } else { q = !q; } }
+                else if (c === ',' && !q) { row.push(''); }
+                else if ((c === '\r' || c === '\n') && !q) {
+                    if (c === '\r' && next === '\n') { i++; }
+                    r.push(row);
+                    row = [''];
+                } else { row[row.length - 1] += c; }
+            }
+            if (row.length > 1 || row[0] !== '') r.push(row);
+            return r;
+        }
+
         async function loadJobs() {
             try {
                 const res = await fetch(csvUrl);
                 const data = await res.text();
-                const rows = data.split(/\r?\n/).filter(r => r.includes(',')).slice(1);
+                const parsedRows = parseCSV(data).slice(1);
+                
                 const feed = document.getElementById('vacancy-feed');
                 document.getElementById('loader').style.display = 'none';
 
-                rows.forEach(row => {
-                    const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    
+                parsedRows.forEach(cols => {
                     if (cols.length >= 6) {
-                        let [logo, company, title, desc, phone, status] = cols.map(c => c ? c.replace(/^"|"$/g, '').trim() : "");
+                        let [logo, company, title, desc, phone, status] = cols.map(c => c ? c.trim() : "");
+                        if (!company || !title) return; // ცარიელი ხაზების გამოტოვება
+                        
                         if (logo.includes("github.com/")) logo = logo.replace("/blob/", "/raw/");
                         
                         const isActive = status && status.toLowerCase() === 'active';
@@ -213,8 +222,8 @@
                         const btnClass = isActive ? 'active-btn' : 'expired-btn';
                         const btnText = isActive ? 'დარეკვა: ' + phone : 'ვაკანსია შევსებულია';
 
-                        const escapedTitle = title.replace(/'/g, "\\'");
-                        const escapedCompany = company.replace(/'/g, "\\'");
+                        const escapedTitle = title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        const escapedCompany = company.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
                         card.innerHTML = `
                             <div class="card-header">
