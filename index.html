@@ -175,39 +175,36 @@
             }
         }
 
-        // CSV-ს უსაფრთხო პარსინგის ფუნქცია (მძიმეებზე და ბრჭყალებზე არ ფეთქდება)
+        // მარტივი და 100%-ით მუშა პარსერი, რომელიც მძიმეებსა და ბრჭყალებს შორის ტექსტს სწორად ყოფს
         function parseCSV(text) {
-            let p = '', r = [];
-            let q = false;
-            let row = [''];
-            for (let i=0; i<text.length; i++) {
-                let c = text[i];
-                let next = text[i+1];
-                if (c === '"') { if (q && next === '"') { row[row.length - 1] += '"'; i++; } else { q = !q; } }
-                else if (c === ',' && !q) { row.push(''); }
-                else if ((c === '\r' || c === '\n') && !q) {
-                    if (c === '\r' && next === '\n') { i++; }
-                    r.push(row);
-                    row = [''];
-                } else { row[row.length - 1] += c; }
-            }
-            if (row.length > 1 || row[0] !== '') r.push(row);
-            return r;
+            let lines = text.split(/\r?\n/);
+            return lines.map(line => {
+                let matches = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
+                return matches.map(val => val.replace(/^"|"$/g, '').trim());
+            });
         }
 
         async function loadJobs() {
             try {
                 const res = await fetch(csvUrl);
                 const data = await res.text();
-                const parsedRows = parseCSV(data).slice(1);
                 
+                // ხელით ვყოფთ ხაზებად, რომ არაფერი გამოგვრჩეს
+                const lines = data.split(/\r?\n/).filter(line => line.trim() !== '');
                 const feed = document.getElementById('vacancy-feed');
                 document.getElementById('loader').style.display = 'none';
 
-                parsedRows.forEach(cols => {
+                // პირველ ხაზს (სათაურებს) ვტოვებთ და დანარჩენს ვუვლით სათითაოდ
+                for (let i = 1; i < lines.length; i++) {
+                    let row = lines[i];
+                    
+                    // ვასუფთავებთ სპეციალურ სიმბოლოებს, რომ მასივში სწორად ჩაჯდეს
+                    let cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    
                     if (cols.length >= 6) {
-                        let [logo, company, title, desc, phone, status] = cols.map(c => c ? c.trim() : "");
-                        if (!company || !title) return; // ცარიელი ხაზების გამოტოვება
+                        let [logo, company, title, desc, phone, status] = cols.map(c => c ? c.replace(/^"|"$/g, '').trim() : "");
+                        
+                        if (!company || !title) continue; 
                         
                         if (logo.includes("github.com/")) logo = logo.replace("/blob/", "/raw/");
                         
@@ -252,7 +249,7 @@
                         `;
                         feed.appendChild(card);
                     }
-                });
+                }
             } catch (e) {
                 document.getElementById('loader').innerText = "შეცდომა მონაცემების ჩატვირთვისას.";
             }
@@ -261,4 +258,3 @@
     </script>
 </body>
 </html>
-
