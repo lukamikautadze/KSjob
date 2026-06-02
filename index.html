@@ -175,30 +175,21 @@
             }
         }
 
-        // მარტივი და 100%-ით მუშა პარსერი, რომელიც მძიმეებსა და ბრჭყალებს შორის ტექსტს სწორად ყოფს
-        function parseCSV(text) {
-            let lines = text.split(/\r?\n/);
-            return lines.map(line => {
-                let matches = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
-                return matches.map(val => val.replace(/^"|"$/g, '').trim());
-            });
-        }
-
         async function loadJobs() {
             try {
                 const res = await fetch(csvUrl);
                 const data = await res.text();
                 
-                // ხელით ვყოფთ ხაზებად, რომ არაფერი გამოგვრჩეს
+                // ვყოფთ ხაზებად და ვფილტრავთ ცარიელებს
                 const lines = data.split(/\r?\n/).filter(line => line.trim() !== '');
                 const feed = document.getElementById('vacancy-feed');
                 document.getElementById('loader').style.display = 'none';
 
-                // პირველ ხაზს (სათაურებს) ვტოვებთ და დანარჩენს ვუვლით სათითაოდ
+                // გამოვტოვოთ პირველი ხაზი (სათაურები)
                 for (let i = 1; i < lines.length; i++) {
                     let row = lines[i];
                     
-                    // ვასუფთავებთ სპეციალურ სიმბოლოებს, რომ მასივში სწორად ჩაჯდეს
+                    // ვყოფთ მძიმეებით, მაგრამ ვითვალისწინებთ ბრჭყალებს
                     let cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     
                     if (cols.length >= 6) {
