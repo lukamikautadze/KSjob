@@ -180,16 +180,13 @@
                 const res = await fetch(csvUrl);
                 const data = await res.text();
                 
-                // ვყოფთ ხაზებად და ვფილტრავთ ცარიელებს
                 const lines = data.split(/\r?\n/).filter(line => line.trim() !== '');
                 const feed = document.getElementById('vacancy-feed');
                 document.getElementById('loader').style.display = 'none';
 
-                // გამოვტოვოთ პირველი ხაზი (სათაურები)
                 for (let i = 1; i < lines.length; i++) {
                     let row = lines[i];
                     
-                    // ვყოფთ მძიმეებით, მაგრამ ვითვალისწინებთ ბრჭყალებს
                     let cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     
                     if (cols.length >= 6) {
@@ -210,6 +207,7 @@
                         const btnClass = isActive ? 'active-btn' : 'expired-btn';
                         const btnText = isActive ? 'დარეკვა: ' + phone : 'ვაკანსია შევსებულია';
 
+                        // FIX: was escapTitle / escapCompany (missing the 'd')
                         const escapedTitle = title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                         const escapedCompany = company.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
@@ -229,7 +227,7 @@
                             <p class="description">${desc}</p>
                             <div class="action-row">
                                 <a ${isActive ? `href="tel:${phone}"` : 'href="javascript:void(0)"'} class="call-btn ${btnClass}">${btnText}</a>
-                                <div class="share-btn-wrap" onclick="handleShare('${escapTitle}', '${escapCompany}')">
+                                <div class="share-btn-wrap" onclick="handleShare('${escapedTitle}', '${escapedCompany}')">
                                     <div class="logo-stack">
                                         <img class="mini-logo l1" src="https://cdn-icons-png.flaticon.com/512/733/733585.png">
                                         <img class="mini-logo l2" src="https://cdn-icons-png.flaticon.com/512/5968/5968771.png">
