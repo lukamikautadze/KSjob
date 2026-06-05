@@ -352,8 +352,8 @@
                 <div class="field">
                     <label>სტატუსი</label>
                     <select id="f-status">
-                        <option value="active">✅ Active</option>
-                        <option value="expired">❌ Expired</option>
+                        <option value="Active">✅ Active</option>
+                        <option value="Expired">❌ Expired</option>
                     </select>
                 </div>
             </div>
@@ -561,7 +561,7 @@
 
     function resetForm() {
         ['f-company','f-title','f-desc','f-phone'].forEach(id => document.getElementById(id).value = '');
-        document.getElementById('f-status').value = 'active';
+        document.getElementById('f-status').value = 'Active';
         removeLogo(); updatePreview();
     }
 
@@ -592,7 +592,7 @@
                 row.className = 'vacancy-row' + (isActive ? '' : ' is-expired');
                 row.dataset.company = company;
                 row.dataset.title = title;
-                row.dataset.status = isActive ? 'active' : 'expired';
+                row.dataset.status = isActive ? 'Active' : 'Expired';
 
                 row.innerHTML = `
                     <img class="row-logo" src="${logo || ''}" onerror="this.style.display='none'">
@@ -602,7 +602,7 @@
                         <div class="row-phone">${phone}</div>
                     </div>
                     <div class="row-badge ${isActive ? 'active' : 'expired'}">${isActive ? '● Active' : '● Expired'}</div>
-                    <button class="toggle-btn" onclick="toggleStatus(this, '${company.replace(/'/g,"\\'")}', '${title.replace(/'/g,"\\'")}', '${isActive ? 'active' : 'expired'}')">
+                    <button class="toggle-btn" onclick="toggleStatus(this, '${company.replace(/'/g,"\\'")}', '${title.replace(/'/g,"\\'")}', '${isActive ? 'Active' : 'Expired'}')">
                         ${isActive ? 'Expire ✕' : 'Activate ✓'}
                     </button>
                 `;
@@ -614,7 +614,7 @@
     }
 
     async function toggleStatus(btn, company, title, currentStatus) {
-        const newStatus = currentStatus === 'active' ? 'expired' : 'active';
+        const newStatus = currentStatus === 'Active' ? 'Expired' : 'Active';
         btn.disabled = true;
         btn.textContent = '...';
 
@@ -622,10 +622,10 @@
             const params = new URLSearchParams({ action: 'update_status', company, title, status: newStatus });
             await fetch(APPS_SCRIPT_URL + '?' + params.toString(), { method: 'GET', mode: 'no-cors' });
             await new Promise(r => setTimeout(r, 1000));
-            showToast(newStatus === 'expired' ? 'ვაკანსია დაიხურა' : 'ვაკანსია გააქტიურდა', 'success');
+            showToast(newStatus === 'Expired' ? 'ვაკანსია დაიხურა' : 'ვაკანსია გააქტიურდა', 'success');
             const row = btn.closest('.vacancy-row');
             const badge = row.querySelector('.row-badge');
-            if (newStatus === 'expired') {
+            if (newStatus === 'Expired') {
                 row.classList.add('is-expired');
                 badge.className = 'row-badge expired'; badge.textContent = '● Expired';
                 btn.textContent = 'Activate ✓';
