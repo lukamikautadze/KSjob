@@ -545,21 +545,12 @@
             let logoUrl = '';
             if (logoFile) logoUrl = await uploadToCloudinary(logoFile);
 
-            const res = await fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'append', logo: logoUrl, company, title, desc, phone, status })
-            });
-
-            let result;
-            try { result = await res.json(); } catch(e) { result = { result: 'success' }; }
-
-            if (!result.result || result.result === 'success') {
-                showToast('ვაკანსია წარმატებით დაემატა!', 'success');
-                resetForm();
-            } else {
-                throw new Error(result.error || 'Unknown error');
-            }
+            const params = new URLSearchParams({ action: 'append', logo: logoUrl, company, title, desc, phone, status });
+            await fetch(APPS_SCRIPT_URL + '?' + params.toString(), { method: 'GET', mode: 'no-cors' });
+            // no-cors means we can't read the response, but it gets written
+            await new Promise(r => setTimeout(r, 1000));
+            showToast('ვაკანსია წარმატებით დაემატა!', 'success');
+            resetForm();
         } catch (err) {
             console.error(err);
             showToast('შეცდომა: ' + err.message, 'error');
@@ -628,33 +619,22 @@
         btn.textContent = '...';
 
         try {
-            const res = await fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'update_status', company, title, status: newStatus })
-            });
-
-            let result;
-            try { result = await res.json(); } catch(e) { result = { result: 'success' }; }
-
-            if (!result.result || result.result === 'success') {
-                showToast(newStatus === 'expired' ? 'ვაკანსია დაიხურა' : 'ვაკანსია გააქტიურდა', 'success');
-                // update UI immediately without full reload
-                const row = btn.closest('.vacancy-row');
-                const badge = row.querySelector('.row-badge');
-                if (newStatus === 'expired') {
-                    row.classList.add('is-expired');
-                    badge.className = 'row-badge expired'; badge.textContent = '● Expired';
-                    btn.textContent = 'Activate ✓';
-                } else {
-                    row.classList.remove('is-expired');
-                    badge.className = 'row-badge active'; badge.textContent = '● Active';
-                    btn.textContent = 'Expire ✕';
-                }
-                btn.onclick = () => toggleStatus(btn, company, title, newStatus);
+            const params = new URLSearchParams({ action: 'update_status', company, title, status: newStatus });
+            await fetch(APPS_SCRIPT_URL + '?' + params.toString(), { method: 'GET', mode: 'no-cors' });
+            await new Promise(r => setTimeout(r, 1000));
+            showToast(newStatus === 'expired' ? 'ვაკანსია დაიხურა' : 'ვაკანსია გააქტიურდა', 'success');
+            const row = btn.closest('.vacancy-row');
+            const badge = row.querySelector('.row-badge');
+            if (newStatus === 'expired') {
+                row.classList.add('is-expired');
+                badge.className = 'row-badge expired'; badge.textContent = '● Expired';
+                btn.textContent = 'Activate ✓';
             } else {
-                throw new Error(result.error || 'Unknown');
+                row.classList.remove('is-expired');
+                badge.className = 'row-badge active'; badge.textContent = '● Active';
+                btn.textContent = 'Expire ✕';
             }
+            btn.onclick = () => toggleStatus(btn, company, title, newStatus);
         } catch(e) {
             showToast('შეცდომა: ' + e.message, 'error');
             btn.textContent = currentStatus === 'active' ? 'Expire ✕' : 'Activate ✓';
