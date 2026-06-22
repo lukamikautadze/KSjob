@@ -226,38 +226,46 @@
             }
         }
 
-        // უსაფრთხო CSV პარსერი, რომელიც მუშაობს მაშინაც, როცა ტექსტში Enter-ებია გამოყენებული
+        // გაუმჯობესებული და 100%-ით უსაფრთხო CSV პარსერი
         function parseCSV(text) {
-            let lines = [];
-            let row = [""];
+            const result = [];
+            let row = [];
+            let field = '';
             let inQuotes = false;
             for (let i = 0; i < text.length; i++) {
-                let c = text[i];
-                let next = text[i+1];
-                if (c === '"') {
-                    if (inQuotes && next === '"') { row[row.length - 1] += '"'; i++; } 
-                    else { inQuotes = !inQuotes; }
-                } else if (c === ',' && !inQuotes) {
-                    row.push("");
-                } else if ((c === '\r' || c === '\n') && !inQuotes) {
-                    if (c === '\r' && next === '\n') { i++; }
-                    lines.push(row);
-                    row = [""];
+                const char = text[i];
+                if (char === '"') {
+                    if (inQuotes && text[i + 1] === '"') {
+                        field += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    row.push(field);
+                    field = '';
+                } else if ((char === '\n' || char === '\r') && !inQuotes) {
+                    if (char === '\r' && text[i + 1] === '\n') i++;
+                    row.push(field);
+                    result.push(row);
+                    row = [];
+                    field = '';
                 } else {
-                    row[row.length - 1] += c;
+                    field += char;
                 }
             }
-            if (row.length > 1 || row[0] !== "") lines.push(row);
-            return lines;
+            if (row.length > 0 || field !== '') {
+                row.push(field);
+                result.push(row);
+            }
+            return result;
         }
 
         async function loadJobs() {
             try {
-                // შესწორება 1: დაემატა დროის პარამეტრი და cache: 'no-store' კეშირების წინააღმდეგ
                 const res = await fetch(csvUrl + '&t=' + Date.now(), { cache: 'no-store' });
                 const data = await res.text();
                 
-                // შესწორება 2: ვიყენებთ უსაფრთხო პარსერს, ძველი split(/\r?\n/) მაგივრად
                 const rows = parseCSV(data);
                 const feed = document.getElementById('vacancy-feed');
                 document.getElementById('loader').style.display = 'none';
@@ -266,13 +274,15 @@
                 for (let i = 1; i < rows.length; i++) {
                     let cols = rows[i];
                     if (cols.length >= 6) {
-                        let [logo, company, title, desc, phone, status] = cols.map(c => c ? c.replace(/^"|"$/g, '').trim() : "");
+                        // პარსერი ბრჭყალებს უკვე აშორებს, ამიტომ მხოლოდ trim() არის საკმარისი
+                        let [logo, company, title, desc, phone, status] = cols.map(c => c ? c.trim() : "");
                         if (!company || !title) continue;
                         if (logo.includes("github.com/")) logo = logo.replace("/blob/", "/raw/");
 
-                        // შესწორება 3: დაზღვევა რეგისტრზე (Active/active) და ზედმეტ გამოტოვებებზე
                         const isActive = status && status.trim().toLowerCase() === 'active';
                         const card = document.createElement('div');
+                        
+                        // Expired კლასი მიენიჭება იმ ვაკანსიებს, რომლებიც Active არ არის
                         card.className = `vacancy-card ${!isActive ? 'expired' : ''}`;
 
                         const badgeHTML = isActive
@@ -313,7 +323,7 @@
                 }
 
                 if (count === 0) {
-                    feed.innerHTML = '<div class="empty-state">ამჟამად აქტიური ვაკანსიები არ არის.</div>';
+                    feed.innerHTML = '<div class="empty-state">ამჟამად ვაკანსიები არ არის.</div>';
                 }
 
             } catch (e) {
