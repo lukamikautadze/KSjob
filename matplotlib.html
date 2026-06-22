@@ -547,7 +547,6 @@
 
             const params = new URLSearchParams({ action: 'append', logo: logoUrl, company, title, desc, phone, status });
             await fetch(APPS_SCRIPT_URL + '?' + params.toString(), { method: 'GET', mode: 'no-cors' });
-            // no-cors means we can't read the response, but it gets written
             await new Promise(r => setTimeout(r, 1000));
             showToast('ვაკანსია წარმატებით დაემატა!', 'success');
             resetForm();
@@ -571,7 +570,8 @@
         list.innerHTML = '<div class="manage-loading">იტვირთება...</div>';
 
         try {
-            const res = await fetch(CSV_URL + '&t=' + Date.now());
+            // ✅ FIX 1: cache: 'no-store' + timestamp პარამეტრი კეშის გვერდის ავლით
+            const res = await fetch(CSV_URL + '&t=' + Date.now(), { cache: 'no-store' });
             const text = await res.text();
             const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
 
@@ -637,7 +637,8 @@
             btn.onclick = () => toggleStatus(btn, company, title, newStatus);
         } catch(e) {
             showToast('შეცდომა: ' + e.message, 'error');
-            btn.textContent = currentStatus === 'active' ? 'Expire ✕' : 'Activate ✓';
+            // ✅ FIX 2: currentStatus-ის შედარება 'Active'-ზე (არა 'active')
+            btn.textContent = currentStatus === 'Active' ? 'Expire ✕' : 'Activate ✓';
         } finally {
             btn.disabled = false;
         }
