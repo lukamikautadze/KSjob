@@ -203,7 +203,7 @@
     <div class="feed" id="vacancy-feed"></div>
 
     <footer>
-        ქუთაისის მერის ახალგაზრდული საბჭო &nbsp;·&nbsp; <a href="matplotlib.html">Admin</a>
+        ქუთაისის მერის ახალგაზრდული საბჭო &nbsp;·&nbsp; <a href="admin.html">Admin</a>
     </footer>
 
     <script>
@@ -228,7 +228,8 @@
 
         async function loadJobs() {
             try {
-                const res = await fetch(csvUrl);
+                // ✅ FIX 1: cache: 'no-store' + timestamp პარამეტრი კეშის გვერდის ავლით
+                const res = await fetch(csvUrl + '&t=' + Date.now(), { cache: 'no-store' });
                 const data = await res.text();
                 const lines = data.split(/\r?\n/).filter(line => line.trim() !== '');
                 const feed = document.getElementById('vacancy-feed');
@@ -240,7 +241,11 @@
                     if (cols.length >= 6) {
                         let [logo, company, title, desc, phone, status] = cols.map(c => c ? c.replace(/^"|"$/g, '').trim() : "");
                         if (!company || !title) continue;
-                        if (logo.includes("github.com/")) logo = logo.replace("/blob/", "/raw/");
+
+                        // ✅ FIX 2: GitHub URL გამოსწორება უფრო საიმედოდ
+                        if (logo && logo.includes("github.com") && !logo.includes("/raw/")) {
+                            logo = logo.replace("/blob/", "/raw/");
+                        }
 
                         const isActive = status && status.toLowerCase() === 'active';
                         const card = document.createElement('div');
