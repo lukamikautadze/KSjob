@@ -158,6 +158,43 @@
         .field textarea { resize: vertical; min-height: 100px; line-height: 1.5; }
         .field select option { background: var(--card); }
 
+        /* ── CONTACT TYPE SELECTOR ── */
+        .contact-type-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .contact-type-btn {
+            flex: 1;
+            padding: 10px 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--muted);
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .contact-type-btn.active {
+            border-color: var(--yellow);
+            color: var(--yellow);
+            background: var(--yellow-dim);
+        }
+
+        .contact-hint {
+            font-size: 0.75rem;
+            color: var(--muted);
+            font-family: var(--mono);
+            margin-top: 2px;
+        }
+
+        /* ── LOGO UPLOAD ── */
         .logo-upload-area {
             border: 2px dashed var(--border); border-radius: 10px; padding: 24px;
             text-align: center; cursor: pointer; transition: all 0.2s; position: relative;
@@ -203,7 +240,10 @@
         .preview-company { font-size: 0.8rem; color: var(--yellow); text-transform: uppercase; font-weight: bold; }
         .preview-title { font-size: 1.4rem; font-weight: 700; margin-top: 4px; line-height: 1.2; color: #fff; }
         .preview-desc { color: #d1d1d1; font-size: 0.9rem; line-height: 1.5; margin-top: 12px; white-space: pre-line; }
-        .preview-phone { margin-top: 16px; background: var(--yellow); color: #001f3f; padding: 12px; border-radius: 8px; font-weight: 700; text-align: center; font-size: 0.95rem; }
+        .preview-action { margin-top: 16px; padding: 12px; border-radius: 8px; font-weight: 700; text-align: center; font-size: 0.95rem; }
+        .preview-action.call { background: var(--yellow); color: #001f3f; }
+        .preview-action.form { background: #3b82f6; color: #fff; }
+        .preview-action.email { background: #8b5cf6; color: #fff; }
 
         /* ── MANAGE TAB ── */
         .manage-loading { text-align: center; padding: 40px; color: var(--yellow); font-family: var(--mono); font-size: 0.9rem; }
@@ -231,12 +271,12 @@
         .row-info { flex-grow: 1; min-width: 0; }
         .row-company { font-size: 0.75rem; color: var(--yellow); text-transform: uppercase; font-weight: 700; font-family: var(--mono); }
         .row-title { font-size: 1rem; font-weight: 700; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .row-phone { font-size: 0.8rem; color: var(--muted); margin-top: 2px; font-family: var(--mono); }
+        .row-contact { font-size: 0.8rem; color: var(--muted); margin-top: 2px; font-family: var(--mono); }
 
         .row-badge {
             display: flex; align-items: center; gap: 5px;
             padding: 4px 10px; border-radius: 20px;
-            font-size: 0.7am; font-weight: 700; text-transform: uppercase;
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
             white-space: nowrap; font-family: var(--mono);
         }
         .row-badge.active { background: rgba(46,204,113,0.15); border: 1px solid var(--green); color: var(--green); }
@@ -307,6 +347,7 @@
             .login-box { width: 90%; padding: 30px 24px; }
             .vacancy-row { flex-wrap: wrap; }
             .toggle-btn, .delete-btn { width: 100%; text-align: center; }
+            .contact-type-btn { font-size: 0.65rem; padding: 8px 4px; }
         }
     </style>
 </head>
@@ -356,17 +397,39 @@
                 <textarea id="f-desc" placeholder="ვაკანსიის დეტალები, მოთხოვნები, პირობები..."></textarea>
             </div>
 
-            <div class="form-row">
-                <div class="field">
-                    <label>ტელეფონი *</label>
-                    <input type="tel" id="f-phone" placeholder="+995 5XX XXX XXX">
+            <!-- ── CONTACT TYPE ── -->
+            <div class="field full">
+                <label>კონტაქტის ტიპი *</label>
+                <div class="contact-type-row">
+                    <button class="contact-type-btn active" data-type="phone" onclick="setContactType('phone')">📞 ზარი</button>
+                    <button class="contact-type-btn" data-type="form" onclick="setContactType('form')">📋 ფორმა</button>
+                    <button class="contact-type-btn" data-type="email" onclick="setContactType('email')">📧 მეილი</button>
                 </div>
+
+                <div id="contact-input-phone">
+                    <input type="tel" id="f-phone" placeholder="+995 5XX XXX XXX">
+                    <div class="contact-hint">// განმცხადებელს ამ ნომერზე დაურეკავენ</div>
+                </div>
+                <div id="contact-input-form" style="display:none;">
+                    <input type="url" id="f-form-url" placeholder="https://forms.google.com/..." oninput="updatePreview()">
+                    <div class="contact-hint">// Google Forms ან სხვა ფორმის ლინკი — გაიხსნება ახალ ჩანართში</div>
+                </div>
+                <div id="contact-input-email" style="display:none;">
+                    <input type="email" id="f-email" placeholder="hr@company.ge" oninput="updatePreview()">
+                    <div class="contact-hint">// კანდიდატი პირდაპირ ამ მეილზე გამოაგზავნის CV-ს</div>
+                </div>
+            </div>
+
+            <div class="form-row">
                 <div class="field">
                     <label>სტატუსი</label>
                     <select id="f-status">
                         <option value="Active">✅ Active</option>
                         <option value="Expired">❌ Expired</option>
                     </select>
+                </div>
+                <div class="field">
+                    <!-- spacer -->
                 </div>
             </div>
 
@@ -404,7 +467,7 @@
                 </div>
             </div>
             <div class="preview-desc" id="prev-desc">აღწერა გამოჩნდება აქ...</div>
-            <div class="preview-phone" id="prev-phone">დარეკვა: +995 5XX XXX XXX</div>
+            <div class="preview-action call" id="prev-action">დარეკვა: +995 5XX XXX XXX</div>
         </div>
 
     </div>
@@ -427,6 +490,7 @@
 
     let localPreviewUrl = '';
     let logoFile = null;
+    let currentContactType = 'phone';
 
     // ── AUTH ──
     function tryLogin() {
@@ -466,12 +530,53 @@
         if (tab === 'manage') loadVacancies();
     }
 
+    // ── CONTACT TYPE ──
+    function setContactType(type) {
+        currentContactType = type;
+        document.querySelectorAll('.contact-type-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.type === type);
+        });
+        document.getElementById('contact-input-phone').style.display = type === 'phone' ? 'flex' : 'none';
+        document.getElementById('contact-input-form').style.display  = type === 'form'  ? 'flex' : 'none';
+        document.getElementById('contact-input-email').style.display = type === 'email' ? 'flex' : 'none';
+
+        // make inputs flex-column
+        ['contact-input-phone','contact-input-form','contact-input-email'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el.style.display === 'flex') el.style.flexDirection = 'column';
+            if (el.style.display === 'flex') el.style.gap = '6px';
+        });
+
+        updatePreview();
+    }
+
+    function getContactValue() {
+        if (currentContactType === 'phone') return document.getElementById('f-phone').value.trim();
+        if (currentContactType === 'form')  return document.getElementById('f-form-url').value.trim();
+        if (currentContactType === 'email') return document.getElementById('f-email').value.trim();
+        return '';
+    }
+
     // ── LIVE PREVIEW ──
     function updatePreview() {
         document.getElementById('prev-company').textContent = document.getElementById('f-company').value || 'კომპანია';
         document.getElementById('prev-title').textContent   = document.getElementById('f-title').value   || 'პოზიცია';
         document.getElementById('prev-desc').textContent    = document.getElementById('f-desc').value    || 'აღწერა გამოჩნდება აქ...';
-        document.getElementById('prev-phone').textContent   = 'დარეკვა: ' + (document.getElementById('f-phone').value || '+995 5XX XXX XXX');
+
+        const actionEl = document.getElementById('prev-action');
+        const val = getContactValue();
+
+        if (currentContactType === 'phone') {
+            actionEl.textContent = 'დარეკვა: ' + (val || '+995 5XX XXX XXX');
+            actionEl.className = 'preview-action call';
+        } else if (currentContactType === 'form') {
+            actionEl.textContent = '📋 განაცხადის ფორმის შევსება';
+            actionEl.className = 'preview-action form';
+        } else {
+            actionEl.textContent = '📧 CV გაგზავნა: ' + (val || 'hr@company.ge');
+            actionEl.className = 'preview-action email';
+        }
+
         const box = document.getElementById('prev-logo-box');
         box.innerHTML = localPreviewUrl
             ? '<img src="' + localPreviewUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">'
@@ -481,6 +586,11 @@
     ['f-company','f-title','f-desc','f-phone'].forEach(id => {
         document.getElementById(id).addEventListener('input', updatePreview);
     });
+
+    // fix display for initial state
+    document.getElementById('contact-input-phone').style.display = 'flex';
+    document.getElementById('contact-input-phone').style.flexDirection = 'column';
+    document.getElementById('contact-input-phone').style.gap = '6px';
 
     // ── LOGO HANDLING ──
     function handleFileSelect(input) {
@@ -539,14 +649,18 @@
     }
 
     // ── SUBMIT NEW VACANCY ──
+    // Sheet columns: logo | company | title | desc | contact_type | contact_value | status
     async function submitVacancy() {
         const company = document.getElementById('f-company').value.trim();
         const title   = document.getElementById('f-title').value.trim();
         const desc    = document.getElementById('f-desc').value.trim();
-        const phone   = document.getElementById('f-phone').value.trim();
         const status  = document.getElementById('f-status').value;
+        const contactValue = getContactValue();
 
-        if (!company || !title || !desc || !phone) { showToast('შეავსე ყველა სავალდებულო ველი', 'error'); return; }
+        if (!company || !title || !desc || !contactValue) {
+            showToast('შეავსე ყველა სავალდებულო ველი', 'error');
+            return;
+        }
 
         const btn = document.getElementById('submit-btn');
         btn.disabled = true; btn.textContent = 'მუშავდება...';
@@ -555,7 +669,16 @@
             let logoUrl = '';
             if (logoFile) logoUrl = await uploadToCloudinary(logoFile);
 
-            const params = new URLSearchParams({ action: 'append', logo: logoUrl, company, title, desc, phone, status });
+            const params = new URLSearchParams({
+                action: 'append',
+                logo: logoUrl,
+                company,
+                title,
+                desc,
+                contact_type: currentContactType,
+                contact_value: contactValue,
+                status
+            });
             await fetch(APPS_SCRIPT_URL + '?' + params.toString(), { method: 'GET', mode: 'no-cors' });
             await new Promise(r => setTimeout(r, 1000));
             showToast('ვაკანსია წარმატებით დაემატა!', 'success');
@@ -569,12 +692,17 @@
     }
 
     function resetForm() {
-        ['f-company','f-title','f-desc','f-phone'].forEach(id => document.getElementById(id).value = '');
+        ['f-company','f-title','f-desc','f-phone','f-form-url','f-email'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
         document.getElementById('f-status').value = 'Active';
-        removeLogo(); updatePreview();
+        setContactType('phone');
+        removeLogo();
+        updatePreview();
     }
 
-    // ── CSV PARSER (ინახავს ახალ ხაზებს ბრჭყალებში) ──
+    // ── CSV PARSER ──
     function parseCSV(text) {
         const result = [];
         let row = [];
@@ -584,29 +712,18 @@
         for (let i = 0; i < text.length; i++) {
             const char = text[i];
             if (char === '"') {
-                if (inQuotes && text[i + 1] === '"') {
-                    field += '"';
-                    i++;
-                } else {
-                    inQuotes = !inQuotes;
-                }
+                if (inQuotes && text[i + 1] === '"') { field += '"'; i++; }
+                else { inQuotes = !inQuotes; }
             } else if (char === ',' && !inQuotes) {
-                row.push(field);
-                field = '';
+                row.push(field); field = '';
             } else if ((char === '\n' || char === '\r') && !inQuotes) {
                 if (char === '\r' && text[i + 1] === '\n') i++;
-                row.push(field);
-                result.push(row);
-                row = [];
-                field = '';
+                row.push(field); result.push(row); row = []; field = '';
             } else {
                 field += char;
             }
         }
-        if (row.length > 0 || field !== '') {
-            row.push(field);
-            result.push(row);
-        }
+        if (row.length > 0 || field !== '') { row.push(field); result.push(row); }
         return result;
     }
 
@@ -618,8 +735,6 @@
         try {
             const res = await fetch(CSV_URL + '&t=' + Date.now());
             const text = await res.text();
-            
-            // ვიყენებთ ახალ პარსერს ძველი .split-ის ნაცვლად
             const rows = parseCSV(text);
 
             if (rows.length <= 1) {
@@ -631,23 +746,31 @@
             for (let i = 1; i < rows.length; i++) {
                 const cols = rows[i];
                 if (cols.length < 6) continue;
-                
-                let [logo, company, title, desc, phone, status] = cols.map(c => c ? c.trim() : '');
+
+                // Support both old format (6 cols) and new (7 cols)
+                let logo, company, title, desc, contact_type, contact_value, status;
+                if (cols.length >= 7) {
+                    [logo, company, title, desc, contact_type, contact_value, status] = cols.map(c => c ? c.trim() : '');
+                } else {
+                    // legacy: phone was col 5, status col 6
+                    [logo, company, title, desc, contact_value, status] = cols.map(c => c ? c.trim() : '');
+                    contact_type = 'phone';
+                }
+
                 if (!company || !title) continue;
 
                 const isActive = status && status.toLowerCase() === 'active';
                 const row = document.createElement('div');
                 row.className = 'vacancy-row' + (isActive ? '' : ' is-expired');
-                row.dataset.company = company;
-                row.dataset.title = title;
-                row.dataset.status = isActive ? 'Active' : 'Expired';
+
+                const contactIcon = contact_type === 'form' ? '📋' : contact_type === 'email' ? '📧' : '📞';
 
                 row.innerHTML = `
                     <img class="row-logo" src="${logo || ''}" onerror="this.style.display='none'">
                     <div class="row-info">
                         <div class="row-company">${company}</div>
                         <div class="row-title">${title}</div>
-                        <div class="row-phone">${phone}</div>
+                        <div class="row-contact">${contactIcon} ${contact_value}</div>
                     </div>
                     <div class="row-badge ${isActive ? 'active' : 'expired'}">${isActive ? '● Active' : '● Expired'}</div>
                     <div style="display: flex; gap: 8px;">
@@ -669,9 +792,7 @@
 
     async function toggleStatus(btn, company, title, currentStatus) {
         const newStatus = currentStatus === 'Active' ? 'Expired' : 'Active';
-        btn.disabled = true;
-        btn.textContent = '...';
-
+        btn.disabled = true; btn.textContent = '...';
         try {
             const params = new URLSearchParams({ action: 'update_status', company, title, status: newStatus });
             await fetch(APPS_SCRIPT_URL + '?' + params.toString(), { method: 'GET', mode: 'no-cors' });
@@ -699,22 +820,15 @@
 
     async function deleteVacancy(btn, company, title) {
         if (!confirm(`ნამდვილად გსურთ წაშალოთ ვაკანსია: "${title}" (${company})?`)) return;
-        
-        btn.disabled = true;
-        btn.textContent = '...';
-
+        btn.disabled = true; btn.textContent = '...';
         try {
             const params = new URLSearchParams({ action: 'delete', company, title });
             await fetch(APPS_SCRIPT_URL + '?' + params.toString(), { method: 'GET', mode: 'no-cors' });
             await new Promise(r => setTimeout(r, 1000));
-            
             showToast('ვაკანსია წარმატებით წაიშალა', 'success');
             btn.closest('.vacancy-row').remove();
-            
             const list = document.getElementById('vacancy-list');
-            if (list.children.length === 0) {
-                list.innerHTML = '<div class="manage-loading">ვაკანსიები არ არის.</div>';
-            }
+            if (list.children.length === 0) list.innerHTML = '<div class="manage-loading">ვაკანსიები არ არის.</div>';
         } catch(e) {
             showToast('შეცდომა: ' + e.message, 'error');
             btn.textContent = 'წაშლა ✕';
