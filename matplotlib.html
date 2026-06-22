@@ -483,7 +483,7 @@
 
 <script>
     const ADMIN_PASSWORD    = 'ksjob2026';
-    const APPS_SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbwELGAiaVWcJjAft_r1rJ2_U4oG-dQAZ140dSrSqTZVy4IScrmIJiEpG9H6Mw0a629K/exec';
+    const APPS_SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbz6Rjl9wh3tvGDl9c_N69QctxlorxCX1SQnu9jRkcf6FHNd_wGNJBfdItHhy5AaBPrd/exec';
     const CLOUDINARY_CLOUD  = 'diw3ynxnj';
     const CLOUDINARY_PRESET = 'blrs44as';
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8h_VRg9Qzv6U7qB3E4WDM0RXakzamSRIBCOqZT3qtFH-UE0p8QTUrkuGioYOar_KNlIx3dzOXebk8/pub?gid=0&single=true&output=csv';
@@ -552,11 +552,16 @@
 
     function getContactValue() {
         if (currentContactType === 'phone') return document.getElementById('f-phone').value.trim();
-        if (currentContactType === 'form')  return document.getElementById('f-form-url').value.trim();
+        if (currentContactType === 'form') {
+            let url = document.getElementById('f-form-url').value.trim();
+            if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'https://' + url;
+            }
+            return url;
+        }
         if (currentContactType === 'email') return document.getElementById('f-email').value.trim();
         return '';
     }
-
     // ── LIVE PREVIEW ──
     function updatePreview() {
         document.getElementById('prev-company').textContent = document.getElementById('f-company').value || 'კომპანია';
