@@ -74,7 +74,7 @@
             gap: 24px;
         }
 
-        /* შენი ორიგინალი დიზაინის ბარათები */
+        /* ბარათების სტილი */
         .preview-card { 
             background: var(--card); 
             border: 1px solid rgba(255,215,0,0.1); 
@@ -113,28 +113,27 @@
 </head>
 <body>
 
+    <!-- HERO SECTION -->
     <div class="hero">
         <img class="hero-logo" src="https://github.com/lukamikautadze/KSjob/raw/main/ksjob-yellow.png" alt="KSjob Logo">
         <h1>საზაფხულო ვაკანსიები ქუთაისში</h1>
     </div>
 
+    <!-- MAIN CONTENT -->
     <div class="container" id="jobs-container">
         <div class="loading">იტვირთება ვაკანსიები...</div>
     </div>
 
     <script>
-        // შენი ბაზის ლინკი კეშის გვერდის ავლით
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8h_VRg9Qzv6U7qB3E4WDM0RXakzamSRIBCOqZT3qtFH-UE0p8QTUrkuGioYOar_KNlIx3dzOXebk8/pub?gid=0&single=true&output=csv';
 
         async function fetchJobs() {
             const container = document.getElementById('jobs-container');
             
             try {
-                // წამოვიღოთ მონაცემები (Date.now() უზრუნველყოფს, რომ ყოველთვის ახალი ვაკანსია გამოჩნდეს მომენტალურად)
                 const res = await fetch(CSV_URL + '&t=' + Date.now(), { cache: 'no-store' });
                 const text = await res.text();
                 
-                // დავყოთ ხაზებად
                 const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
                 
                 if (lines.length <= 1) {
@@ -145,19 +144,16 @@
                 container.innerHTML = '';
                 let hasActiveJobs = false;
 
-                // დავატრიალოთ ციკლი (i = 1 გამოტოვებს ჰედერს)
                 for (let i = 1; i < lines.length; i++) {
-                    // დავყოთ მძიმეებით, გავითვალისწინოთ ბრჭყალები ტექსტში
                     const cols = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     if (cols.length < 6) continue;
 
                     let [logo, company, title, desc, phone, status] = cols.map(c => c ? c.replace(/^"|"$/g, '').trim() : '');
                     
-                    // თუ ვაკანსია არ არის აქტიური, არ გამოვაჩინოთ მთავარზე
-                    if (status.toLowerCase() !== 'active') continue;
+                    // აქ გასწორდა: ამოწმებს ნებისმიერ რეგისტრს (Active, active, ACTIVE და ა.შ.)
+                    if (!status || status.trim().toLowerCase() !== 'active') continue;
                     hasActiveJobs = true;
 
-                    // შევქმნათ შენი სტილის ბარათი
                     const card = document.createElement('div');
                     card.className = 'preview-card';
                     
@@ -188,7 +184,6 @@
             }
         }
 
-        // ჩავრთოთ ფუნქცია საიტის ჩატვირთვისთანავე
         window.addEventListener('DOMContentLoaded', fetchJobs);
     </script>
 </body>
