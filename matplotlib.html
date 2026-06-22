@@ -483,7 +483,7 @@
 
 <script>
     const ADMIN_PASSWORD    = 'ksjob2026';
-    const APPS_SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbz6Rjl9wh3tvGDl9c_N69QctxlorxCX1SQnu9jRkcf6FHNd_wGNJBfdItHhy5AaBPrd/exec';
+    const APPS_SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbzQ4QU3Fw6E2G0RjV-4sIlk3b9Gaj3jLtTx8nv69NuCg-z-Or-Ri1b3rwMuzdWC_rmA/exec';
     const CLOUDINARY_CLOUD  = 'diw3ynxnj';
     const CLOUDINARY_PRESET = 'blrs44as';
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8h_VRg9Qzv6U7qB3E4WDM0RXakzamSRIBCOqZT3qtFH-UE0p8QTUrkuGioYOar_KNlIx3dzOXebk8/pub?gid=0&single=true&output=csv';
@@ -674,12 +674,14 @@
             let logoUrl = '';
             if (logoFile) logoUrl = await uploadToCloudinary(logoFile);
 
+            const descB64 = btoa(unescape(encodeURIComponent(desc)));
             const params = new URLSearchParams({
                 action: 'append',
                 logo: logoUrl,
                 company,
                 title,
-                desc,
+                desc: descB64,
+                desc_encoded: '1',
                 contact_type: currentContactType,
                 contact_value: contactValue,
                 status
