@@ -64,7 +64,6 @@
             font-weight: 900; 
         }
 
-        /* ვაკანსიების კონტეინერი */
         .container {
             max-width: 820px;
             margin: 40px auto 0;
@@ -74,7 +73,6 @@
             gap: 24px;
         }
 
-        /* ბარათების სტილი */
         .preview-card { 
             background: var(--card); 
             border: 1px solid rgba(255,215,0,0.1); 
@@ -113,13 +111,11 @@
 </head>
 <body>
 
-    <!-- HERO SECTION -->
     <div class="hero">
         <img class="hero-logo" src="https://github.com/lukamikautadze/KSjob/raw/main/ksjob-yellow.png" alt="KSjob Logo">
         <h1>საზაფხულო ვაკანსიები ქუთაისში</h1>
     </div>
 
-    <!-- MAIN CONTENT -->
     <div class="container" id="jobs-container">
         <div class="loading">იტვირთება ვაკანსიები...</div>
     </div>
@@ -134,6 +130,9 @@
                 const res = await fetch(CSV_URL + '&t=' + Date.now(), { cache: 'no-store' });
                 const text = await res.text();
                 
+                console.log("=== ნედლი მონაცემები ბაზიდან ===");
+                console.log(text);
+                
                 const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
                 
                 if (lines.length <= 1) {
@@ -146,12 +145,21 @@
 
                 for (let i = 1; i < lines.length; i++) {
                     const cols = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    if (cols.length < 6) continue;
+                    
+                    console.log(`ხაზი ${i}: სვეტების რაოდენობა = ${cols.length}`, cols);
+
+                    if (cols.length < 5) continue; // თუ ძალიან ცარიელი ხაზია, გამოტოვოს
 
                     let [logo, company, title, desc, phone, status] = cols.map(c => c ? c.replace(/^"|"$/g, '').trim() : '');
                     
-                    // აქ გასწორდა: ამოწმებს ნებისმიერ რეგისტრს (Active, active, ACTIVE და ა.შ.)
-                    if (!status || status.trim().toLowerCase() !== 'active') continue;
+                    console.log(`შემოწმება -> კომპანია: ${company}, სტატუსი: "${status}"`);
+
+                    // ამოწმებს ნებისმიერ "active"-ს (დიდი, პატარა, გამოტოვებით)
+                    if (!status || status.trim().toLowerCase() !== 'active') {
+                        console.log(`ხაზი ${i} არ არის აქტიური, გამოვტოვეთ.`);
+                        continue;
+                    }
+                    
                     hasActiveJobs = true;
 
                     const card = document.createElement('div');
@@ -175,11 +183,11 @@
                 }
 
                 if (!hasActiveJobs) {
-                    container.innerHTML = '<div class="no-jobs">ამჟამად აქტიური ვაკანსიები არ არის.</div>';
+                    container.innerHTML = '<div class="no-jobs">აქტიური ვაკანსიები ვერ მოიძებნა.</div>';
                 }
 
             } catch (error) {
-                console.error(error);
+                console.error("შეცდომა რექვესტისას:", error);
                 container.innerHTML = '<div class="no-jobs" style="color:var(--red)">შეცდომა მონაცემების ჩატვირთვისას.</div>';
             }
         }
