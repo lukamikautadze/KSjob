@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ka">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -296,7 +296,6 @@
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="login-screen">
     <div class="login-box">
         <div class="login-title">KSjob // Admin</div>
@@ -307,7 +306,6 @@
     </div>
 </div>
 
-<!-- ADMIN UI -->
 <div id="admin-ui">
 
     <div class="top-bar">
@@ -318,13 +316,11 @@
         <button class="logout-btn" onclick="logout()">გასვლა ✕</button>
     </div>
 
-    <!-- TABS -->
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('add')">+ ვაკანსიის დამატება</button>
         <button class="tab-btn" onclick="switchTab('manage')">✎ ვაკანსიების მართვა</button>
     </div>
 
-    <!-- TAB: ADD -->
     <div class="tab-panel active" id="tab-add">
 
         <div class="form-card">
@@ -382,7 +378,6 @@
             </div>
         </div>
 
-        <!-- live preview -->
         <div class="section-label">// ლაივ პრევიუ</div>
         <div class="preview-card">
             <div class="preview-card-header">
@@ -398,7 +393,6 @@
 
     </div>
 
-    <!-- TAB: MANAGE -->
     <div class="tab-panel" id="tab-manage">
         <button class="refresh-btn" onclick="loadVacancies()">↻ განახლება</button>
         <div id="vacancy-list"><div class="manage-loading">იტვირთება...</div></div>
@@ -564,51 +558,90 @@
         removeLogo(); updatePreview();
     }
 
+    // ── ბულეტპრუფ CSV პარსერი (ინარჩუნებს Enter-ებს და ბრჭყალებს) ──
+    function parseCSV(text) {
+        let lines = [];
+        let row = [""];
+        let inQuotes = false;
+        for (let i = 0; i < text.length; i++) {
+            let c = text[i];
+            let next = text[i+1];
+            if (c === '"') {
+                if (inQuotes && next === '"') { row[row.length - 1] += '"'; i++; } 
+                else { inQuotes = !inQuotes; }
+            } else if (c === ',' && !inQuotes) {
+                row.push("");
+            } else if ((c === '\r' || c === '\n') && !inQuotes) {
+                if (c === '\r' && next === '\n') { i++; }
+                lines.push(row);
+                row = [""];
+            } else {
+                row[row.length - 1] += c;
+            }
+        }
+        if (row.length > 1 || row[0] !== "") lines.push(row);
+        return lines;
+    }
+
     // ── LOAD & MANAGE VACANCIES ──
     async function loadVacancies() {
         const list = document.getElementById('vacancy-list');
         list.innerHTML = '<div class="manage-loading">იტვირთება...</div>';
 
         try {
-            // ✅ FIX 1: cache: 'no-store' + timestamp პარამეტრი კეშის გვერდის ავლით
             const res = await fetch(CSV_URL + '&t=' + Date.now(), { cache: 'no-store' });
             const text = await res.text();
-            const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+            
+            // ვიყენებთ ახალ უსაფრთხო პარსერს
+            const rows = parseCSV(text);
 
-            if (lines.length <= 1) {
+            if (rows.length <= 1) {
                 list.innerHTML = '<div class="manage-loading">ვაკანსიები არ არის.</div>';
                 return;
             }
 
             list.innerHTML = '';
-            for (let i = 1; i < lines.length; i++) {
-                const cols = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                if (cols.length < 6) continue;
-                let [logo, company, title, desc, phone, status] = cols.map(c => c ? c.replace(/^"|"$/g, '').trim() : '');
+            for (let i = 1; i < rows.length; i++) {
+                const cols = rows[i];
+                if (cols.length < 5) continue; // თუ სტატუსი ცარიელია, მაინც არ გამოტოვოს
+                
+                let logo    = cols[0] ? cols[0].trim() : '';
+                let company = cols[1] ? cols[1].trim() : '';
+                let title   = cols[2] ? cols[2].trim() : '';
+                let desc    = cols[3] ? cols[3].trim() : '';
+                let phone   = cols[4] ? cols[4].trim() : '';
+                let status  = cols[5] ? cols[5].trim() : 'Active';
+
                 if (!company || !title) continue;
 
-                const isActive = status && status.toLowerCase() === 'active';
+                const isActive = status.toLowerCase() === 'active';
                 const row = document.createElement('div');
                 row.className = 'vacancy-row' + (isActive ? '' : ' is-expired');
-                row.dataset.company = company;
-                row.dataset.title = title;
-                row.dataset.status = isActive ? 'Active' : 'Expired';
 
                 row.innerHTML = `
                     <img class="row-logo" src="${logo || ''}" onerror="this.style.display='none'">
                     <div class="row-info">
-                        <div class="row-company">${company}</div>
-                        <div class="row-title">${title}</div>
-                        <div class="row-phone">${phone}</div>
+                        <div class="row-company"></div>
+                        <div class="row-title"></div>
+                        <div class="row-phone"></div>
                     </div>
                     <div class="row-badge ${isActive ? 'active' : 'expired'}">${isActive ? '● Active' : '● Expired'}</div>
-                    <button class="toggle-btn" onclick="toggleStatus(this, '${company.replace(/'/g,"\\'")}', '${title.replace(/'/g,"\\'")}', '${isActive ? 'Active' : 'Expired'}')">
-                        ${isActive ? 'Expire ✕' : 'Activate ✓'}
-                    </button>
+                    <button class="toggle-btn">${isActive ? 'Expire ✕' : 'Activate ✓'}</button>
                 `;
+
+                // უსაფრთხოდ ვწერთ ტექსტებს HTML ინექციის და ბრჭყალების აფეთქების გარეშე
+                row.querySelector('.row-company').textContent = company;
+                row.querySelector('.row-title').textContent = title;
+                row.querySelector('.row-phone').textContent = phone;
+
+                // ივენთის მიბმა პირდაპირ JS-იდან ბრჭყალებისგან დაზღვეული სახით
+                const toggleBtn = row.querySelector('.toggle-btn');
+                toggleBtn.onclick = () => toggleStatus(toggleBtn, company, title, isActive ? 'Active' : 'Expired');
+
                 list.appendChild(row);
             }
         } catch(e) {
+            console.error(e);
             list.innerHTML = '<div class="manage-loading" style="color:var(--red)">ჩატვირთვა ვერ მოხერხდა.</div>';
         }
     }
@@ -623,6 +656,7 @@
             await fetch(APPS_SCRIPT_URL + '?' + params.toString(), { method: 'GET', mode: 'no-cors' });
             await new Promise(r => setTimeout(r, 1000));
             showToast(newStatus === 'Expired' ? 'ვაკანსია დაიხურა' : 'ვაკანსია გააქტიურდა', 'success');
+            
             const row = btn.closest('.vacancy-row');
             const badge = row.querySelector('.row-badge');
             if (newStatus === 'Expired') {
@@ -634,10 +668,10 @@
                 badge.className = 'row-badge active'; badge.textContent = '● Active';
                 btn.textContent = 'Expire ✕';
             }
+            // ივენთის ხელახალი გადაწერა ახალი სტატუსით
             btn.onclick = () => toggleStatus(btn, company, title, newStatus);
         } catch(e) {
             showToast('შეცდომა: ' + e.message, 'error');
-            // ✅ FIX 2: currentStatus-ის შედარება 'Active'-ზე (არა 'active')
             btn.textContent = currentStatus === 'Active' ? 'Expire ✕' : 'Activate ✓';
         } finally {
             btn.disabled = false;
