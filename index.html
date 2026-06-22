@@ -16,7 +16,9 @@
             --yellow: #FFD700; 
             --text: #ffffff; 
             --green: #2ecc71; 
-            --red: #ff4d4d; 
+            --red: #ff4d4d;
+            --blue: #3b82f6;
+            --purple: #8b5cf6;
             --main-font: 'Noto Sans Georgian', sans-serif;
         }
         
@@ -152,14 +154,26 @@
         .vacancy-title { font-size: 1.6rem; font-weight: 700; margin: 6px 0 0 0; line-height: 1.2; }
         .description { color: #d1d1d1; margin: 16px 0 0 0; font-size: 1rem; line-height: 1.6; white-space: pre-line; }
         
+        /* ── ACTION ROW ── */
         .action-row { display: flex; gap: 10px; align-items: stretch; margin-top: 20px; }
+
         .call-btn { 
             flex-grow: 1; text-align: center; padding: 16px; text-decoration: none; 
             font-weight: 700; border-radius: 8px; text-transform: uppercase; font-size: 1rem; 
-            display: flex; align-items: center; justify-content: center; border: none; 
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            border: none; cursor: pointer; transition: opacity 0.2s;
         }
-        .call-btn.active-btn { background: var(--yellow); color: var(--bg); }
+        .call-btn:hover { opacity: 0.9; }
+
+        /* phone */
+        .call-btn.type-phone { background: var(--yellow); color: var(--bg); }
+        /* form */
+        .call-btn.type-form  { background: var(--blue); color: #fff; }
+        /* email */
+        .call-btn.type-email { background: var(--purple); color: #fff; }
+        /* expired */
         .call-btn.expired-btn { background: var(--red); color: white; cursor: default; opacity: 1 !important; filter: none !important; }
+        .call-btn.expired-btn:hover { opacity: 1; }
         
         .share-btn-wrap { 
             background: rgba(255,255,255,0.07); border: 1px solid rgba(255,215,0,0.3); 
@@ -226,7 +240,6 @@
             }
         }
 
-        // გაუმჯობესებული და 100%-ით უსაფრთხო CSV პარსერი
         function parseCSV(text) {
             const result = [];
             let row = [];
@@ -235,30 +248,39 @@
             for (let i = 0; i < text.length; i++) {
                 const char = text[i];
                 if (char === '"') {
-                    if (inQuotes && text[i + 1] === '"') {
-                        field += '"';
-                        i++;
-                    } else {
-                        inQuotes = !inQuotes;
-                    }
+                    if (inQuotes && text[i + 1] === '"') { field += '"'; i++; }
+                    else { inQuotes = !inQuotes; }
                 } else if (char === ',' && !inQuotes) {
-                    row.push(field);
-                    field = '';
+                    row.push(field); field = '';
                 } else if ((char === '\n' || char === '\r') && !inQuotes) {
                     if (char === '\r' && text[i + 1] === '\n') i++;
-                    row.push(field);
-                    result.push(row);
-                    row = [];
-                    field = '';
+                    row.push(field); result.push(row); row = []; field = '';
                 } else {
                     field += char;
                 }
             }
-            if (row.length > 0 || field !== '') {
-                row.push(field);
-                result.push(row);
-            }
+            if (row.length > 0 || field !== '') { row.push(field); result.push(row); }
             return result;
+        }
+
+        // Build the action button HTML based on contact type
+        function buildActionBtn(isActive, contactType, contactValue, escapedTitle, escapedCompany) {
+            if (!isActive) {
+                return `<a href="javascript:void(0)" class="call-btn expired-btn">ვაკანსია შევსებულია</a>`;
+            }
+
+            if (contactType === 'form') {
+                const safeUrl = contactValue.replace(/"/g, '&quot;');
+                return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="call-btn type-form">📋 განაცხადის ფორმის შევსება</a>`;
+            }
+
+            if (contactType === 'email') {
+                const subject = encodeURIComponent('CV — ' + escapedTitle.replace(/\\'/g, "'"));
+                return `<a href="mailto:${contactValue}?subject=${subject}" class="call-btn type-email">📧 CV გაგზავნა: ${contactValue}</a>`;
+            }
+
+            // default: phone
+            return `<a href="tel:${contactValue}" class="call-btn type-phone">📞 დარეკვა: ${contactValue}</a>`;
         }
 
         async function loadJobs() {
@@ -272,54 +294,63 @@
 
                 let count = 0;
                 for (let i = 1; i < rows.length; i++) {
-                    let cols = rows[i];
-                    if (cols.length >= 6) {
-                        // პარსერი ბრჭყალებს უკვე აშორებს, ამიტომ მხოლოდ trim() არის საკმარისი
-                        let [logo, company, title, desc, phone, status] = cols.map(c => c ? c.trim() : "");
-                        if (!company || !title) continue;
-                        if (logo.includes("github.com/")) logo = logo.replace("/blob/", "/raw/");
+                    const cols = rows[i];
+                    if (cols.length < 6) continue;
 
-                        const isActive = status && status.trim().toLowerCase() === 'active';
-                        const card = document.createElement('div');
-                        
-                        // Expired კლასი მიენიჭება იმ ვაკანსიებს, რომლებიც Active არ არის
-                        card.className = `vacancy-card ${!isActive ? 'expired' : ''}`;
+                    let logo, company, title, desc, contact_type, contact_value, status;
 
-                        const badgeHTML = isActive
-                            ? '<div class="status-badge active"><div class="dot green"></div>Active</div>'
-                            : '<div class="status-badge expired-badge"><div class="dot red"></div>Expired</div>';
-
-                        const escapedTitle   = title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                        const escapedCompany = company.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-
-                        card.innerHTML = `
-                            <div class="card-header">
-                                <div class="logo-box">
-                                    <img src="${logo}" onerror="this.style.display='none'">
-                                </div>
-                                <div style="flex-grow:1;min-width:0;">
-                                    <div class="info-wrapper">
-                                        <span class="company-name">${company}</span>
-                                        ${badgeHTML}
-                                    </div>
-                                    <h2 class="vacancy-title">${title}</h2>
-                                </div>
-                            </div>
-                            <p class="description">${desc}</p>
-                            <div class="action-row">
-                                <a ${isActive ? `href="tel:${phone}"` : 'href="javascript:void(0)"'} class="call-btn ${isActive ? 'active-btn' : 'expired-btn'}">${isActive ? 'დარეკვა: ' + phone : 'ვაკანსია შევსებულია'}</a>
-                                <div class="share-btn-wrap" onclick="handleShare('${escapedTitle}', '${escapedCompany}')">
-                                    <div class="logo-stack">
-                                        <img class="mini-logo l1" src="https://cdn-icons-png.flaticon.com/512/733/733585.png">
-                                        <img class="mini-logo l2" src="https://cdn-icons-png.flaticon.com/512/5968/5968771.png">
-                                        <img class="mini-logo l3" src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png">
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        feed.appendChild(card);
-                        count++;
+                    // Support both old (6-col: logo,company,title,desc,phone,status)
+                    // and new (7-col: logo,company,title,desc,contact_type,contact_value,status)
+                    if (cols.length >= 7) {
+                        [logo, company, title, desc, contact_type, contact_value, status] = cols.map(c => c ? c.trim() : '');
+                    } else {
+                        [logo, company, title, desc, contact_value, status] = cols.map(c => c ? c.trim() : '');
+                        contact_type = 'phone';
                     }
+
+                    if (!company || !title) continue;
+                    if (logo && logo.includes("github.com/")) logo = logo.replace("/blob/", "/raw/");
+
+                    const isActive = status && status.trim().toLowerCase() === 'active';
+                    const card = document.createElement('div');
+                    card.className = `vacancy-card ${!isActive ? 'expired' : ''}`;
+
+                    const badgeHTML = isActive
+                        ? '<div class="status-badge active"><div class="dot green"></div>Active</div>'
+                        : '<div class="status-badge expired-badge"><div class="dot red"></div>Expired</div>';
+
+                    const escapedTitle   = title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    const escapedCompany = company.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+                    const actionBtnHTML = buildActionBtn(isActive, contact_type, contact_value, escapedTitle, escapedCompany);
+
+                    card.innerHTML = `
+                        <div class="card-header">
+                            <div class="logo-box">
+                                <img src="${logo}" onerror="this.style.display='none'">
+                            </div>
+                            <div style="flex-grow:1;min-width:0;">
+                                <div class="info-wrapper">
+                                    <span class="company-name">${company}</span>
+                                    ${badgeHTML}
+                                </div>
+                                <h2 class="vacancy-title">${title}</h2>
+                            </div>
+                        </div>
+                        <p class="description">${desc}</p>
+                        <div class="action-row">
+                            ${actionBtnHTML}
+                            <div class="share-btn-wrap" onclick="handleShare('${escapedTitle}', '${escapedCompany}')">
+                                <div class="logo-stack">
+                                    <img class="mini-logo l1" src="https://cdn-icons-png.flaticon.com/512/733/733585.png">
+                                    <img class="mini-logo l2" src="https://cdn-icons-png.flaticon.com/512/5968/5968771.png">
+                                    <img class="mini-logo l3" src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    feed.appendChild(card);
+                    count++;
                 }
 
                 if (count === 0) {
